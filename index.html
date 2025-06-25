@@ -62,13 +62,19 @@
       top: 50%;
       transform: translateY(-50%);
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      gap: 16px;
       background: rgba(255, 255, 255, 0.9);
-      padding: 16px 12px;
+      padding: 16px;
       border-radius: 16px;
       backdrop-filter: blur(10px);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      align-items: center;
+    }
+
+    .theme-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .theme {
@@ -212,7 +218,7 @@
       border-color: #45a049;
     }
 
-    /* Gradient Themes */
+    /* Gradient Themes - Row 1 */
     .cool   { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
     .beach  { background: linear-gradient(135deg, #00c9ff, #92fe9d); }
     .violet { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
@@ -225,6 +231,20 @@
     .peach  { background: linear-gradient(135deg, #ffecd2, #fcb69f); }
     .dream  { background: linear-gradient(135deg, #c471f5, #fa71cd); }
     .ice    { background: linear-gradient(135deg, #74ebd5, #9face6); }
+
+    /* Gradient Themes - Row 2 */
+    .fire     { background: linear-gradient(135deg, #ff6b35, #f7931e); }
+    .ocean    { background: linear-gradient(135deg, #2e3192, #1bffff); }
+    .forest   { background: linear-gradient(135deg, #134e5e, #71b280); }
+    .gold     { background: linear-gradient(135deg, #f7971e, #ffd200); }
+    .purple   { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .coral    { background: linear-gradient(135deg, #ff7b7b, #ff416c); }
+    .midnight { background: linear-gradient(135deg, #232526, #414345); }
+    .autumn   { background: linear-gradient(135deg, #fa709a, #fee140); }
+    .lime     { background: linear-gradient(135deg, #a8e6cf, #dcedc1); }
+    .lavender { background: linear-gradient(135deg, #d299c2, #fef9d7); }
+    .cherry   { background: linear-gradient(135deg, #eb3349, #f45c43); }
+    .steel    { background: linear-gradient(135deg, #74b9ff, #0984e3); }
 
     .signature-text {
       position: absolute;
@@ -270,18 +290,37 @@
 
     <!-- Theme Selector -->
     <div class="theme-selector">
-      <div class="theme cool" onclick="changeTheme('cool')"></div>
-      <div class="theme beach" onclick="changeTheme('beach')"></div>
-      <div class="theme violet" onclick="changeTheme('violet')"></div>
-      <div class="theme rose" onclick="changeTheme('rose')"></div>
-      <div class="theme sky" onclick="changeTheme('sky')"></div>
-      <div class="theme love" onclick="changeTheme('love')"></div>
-      <div class="theme sunset" onclick="changeTheme('sunset')"></div>
-      <div class="theme aqua" onclick="changeTheme('aqua')"></div>
-      <div class="theme mint" onclick="changeTheme('mint')"></div>
-      <div class="theme peach" onclick="changeTheme('peach')"></div>
-      <div class="theme dream" onclick="changeTheme('dream')"></div>
-      <div class="theme ice" onclick="changeTheme('ice')"></div>
+      <!-- Column 1 -->
+      <div class="theme-column">
+        <div class="theme cool" onclick="changeTheme('cool')"></div>
+        <div class="theme beach" onclick="changeTheme('beach')"></div>
+        <div class="theme violet" onclick="changeTheme('violet')"></div>
+        <div class="theme rose" onclick="changeTheme('rose')"></div>
+        <div class="theme sky" onclick="changeTheme('sky')"></div>
+        <div class="theme love" onclick="changeTheme('love')"></div>
+        <div class="theme sunset" onclick="changeTheme('sunset')"></div>
+        <div class="theme aqua" onclick="changeTheme('aqua')"></div>
+        <div class="theme mint" onclick="changeTheme('mint')"></div>
+        <div class="theme peach" onclick="changeTheme('peach')"></div>
+        <div class="theme dream" onclick="changeTheme('dream')"></div>
+        <div class="theme ice" onclick="changeTheme('ice')"></div>
+      </div>
+      
+      <!-- Column 2 -->
+      <div class="theme-column">
+        <div class="theme fire" onclick="changeTheme('fire')"></div>
+        <div class="theme ocean" onclick="changeTheme('ocean')"></div>
+        <div class="theme forest" onclick="changeTheme('forest')"></div>
+        <div class="theme gold" onclick="changeTheme('gold')"></div>
+        <div class="theme purple" onclick="changeTheme('purple')"></div>
+        <div class="theme coral" onclick="changeTheme('coral')"></div>
+        <div class="theme midnight" onclick="changeTheme('midnight')"></div>
+        <div class="theme autumn" onclick="changeTheme('autumn')"></div>
+        <div class="theme lime" onclick="changeTheme('lime')"></div>
+        <div class="theme lavender" onclick="changeTheme('lavender')"></div>
+        <div class="theme cherry" onclick="changeTheme('cherry')"></div>
+        <div class="theme steel" onclick="changeTheme('steel')"></div>
+      </div>
     </div>
 
     <!-- Style Controls -->
@@ -315,6 +354,7 @@
 
   <script>
     const themes = {
+      // Row 1
       cool: 'linear-gradient(135deg, #a1c4fd, #c2e9fb)',
       beach: 'linear-gradient(135deg, #00c9ff, #92fe9d)',
       violet: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
@@ -326,7 +366,21 @@
       mint: 'linear-gradient(135deg, #d4fc79, #96e6a1)',
       peach: 'linear-gradient(135deg, #ffecd2, #fcb69f)',
       dream: 'linear-gradient(135deg, #c471f5, #fa71cd)',
-      ice: 'linear-gradient(135deg, #74ebd5, #9face6)'
+      ice: 'linear-gradient(135deg, #74ebd5, #9face6)',
+      
+      // Row 2
+      fire: 'linear-gradient(135deg, #ff6b35, #f7931e)',
+      ocean: 'linear-gradient(135deg, #2e3192, #1bffff)',
+      forest: 'linear-gradient(135deg, #134e5e, #71b280)',
+      gold: 'linear-gradient(135deg, #f7971e, #ffd200)',
+      purple: 'linear-gradient(135deg, #667eea, #764ba2)',
+      coral: 'linear-gradient(135deg, #ff7b7b, #ff416c)',
+      midnight: 'linear-gradient(135deg, #232526, #414345)',
+      autumn: 'linear-gradient(135deg, #fa709a, #fee140)',
+      lime: 'linear-gradient(135deg, #a8e6cf, #dcedc1)',
+      lavender: 'linear-gradient(135deg, #d299c2, #fef9d7)',
+      cherry: 'linear-gradient(135deg, #eb3349, #f45c43)',
+      steel: 'linear-gradient(135deg, #74b9ff, #0984e3)'
     };
 
     const ratios = {
@@ -553,6 +607,7 @@
     function createCanvasGradient(ctx, themeName, width, height) {
       // Define color pairs for each theme
       const gradients = {
+        // Row 1
         cool: ['#a1c4fd', '#c2e9fb'],
         beach: ['#00c9ff', '#92fe9d'],
         violet: ['#a18cd1', '#fbc2eb'],
@@ -564,7 +619,21 @@
         mint: ['#d4fc79', '#96e6a1'],
         peach: ['#ffecd2', '#fcb69f'],
         dream: ['#c471f5', '#fa71cd'],
-        ice: ['#74ebd5', '#9face6']
+        ice: ['#74ebd5', '#9face6'],
+        
+        // Row 2
+        fire: ['#ff6b35', '#f7931e'],
+        ocean: ['#2e3192', '#1bffff'],
+        forest: ['#134e5e', '#71b280'],
+        gold: ['#f7971e', '#ffd200'],
+        purple: ['#667eea', '#764ba2'],
+        coral: ['#ff7b7b', '#ff416c'],
+        midnight: ['#232526', '#414345'],
+        autumn: ['#fa709a', '#fee140'],
+        lime: ['#a8e6cf', '#dcedc1'],
+        lavender: ['#d299c2', '#fef9d7'],
+        cherry: ['#eb3349', '#f45c43'],
+        steel: ['#74b9ff', '#0984e3']
       };
       
       const colors = gradients[themeName] || gradients.sky;
