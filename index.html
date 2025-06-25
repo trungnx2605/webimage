@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gradient Theme + Upload + Style Controls + Aspect Ratios</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .canvas-frame {
+      transition: all 0.8s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .image-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: padding 0.3s ease;
+    }
+
+    .uploaded-image {
+      max-width: 95%;
+      max-height: 95%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      transition: all 0.3s ease;
+    }
+
+    .theme-selector {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 16px 12px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .theme {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+    }
+
+    .theme:hover {
+      transform: scale(1.1);
+    }
+
+    .upload-box {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .control-panel {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 18px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 200px;
+    }
+
+    .control-panel label {
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-panel input[type="range"] {
+      width: 100%;
+    }
+
+    .value-display {
+      font-size: 12px;
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #666;
+      min-width: 35px;
+      text-align: center;
+    }
+
+    .download-box {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .download-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .download-btn:hover {
+      background: #45a049;
+      transform: translateY(-1px);
+    }
+
+    .download-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .ratio-selector {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .ratio-btn {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      color: #555;
+      transition: all 0.2s ease;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .ratio-btn:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: translateY(-1px);
+    }
+
+    .ratio-btn.active {
+      background: #4CAF50;
+      color: white;
+      border-color: #45a049;
+    }
+
+    /* Gradient Themes */
+    .cool   { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
+    .beach  { background: linear-gradient(135deg, #00c9ff, #92fe9d); }
+    .violet { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+    .rose   { background: linear-gradient(135deg, #fbc2eb, #a6c1ee); }
+    .sky    { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+    .love   { background: linear-gradient(135deg, #ff9a9e, #fad0c4); }
+    .sunset { background: linear-gradient(135deg, #ff758c, #ff7eb3); }
+    .aqua   { background: linear-gradient(135deg, #13547a, #80d0c7); }
+    .mint   { background: linear-gradient(135deg, #d4fc79, #96e6a1); }
+    .peach  { background: linear-gradient(135deg, #ffecd2, #fcb69f); }
+    .dream  { background: linear-gradient(135deg, #c471f5, #fa71cd); }
+    .ice    { background: linear-gradient(135deg, #74ebd5, #9face6); }
+
+    .signature-text {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      pointer-events: none;
+      z-index: 100;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Canvas Frame with Gradient Background -->
+    <div class="canvas-frame" id="canvasFrame">
+      <!-- Uploaded Image Preview -->
+      <div class="image-container" id="imageContainer" style="display: none; padding: 60px;">
+        <img id="previewImage" class="uploaded-image" src="" alt="Uploaded" style="border-radius: 16px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);" />
+      </div>
+      <!-- Signature Text -->
+      <div class="signature-text" id="signatureText" style="display: none;"></div>
+    </div>
+
+    <!-- Ratio Selector -->
+    <div class="ratio-selector">
+      <div class="ratio-btn" onclick="changeRatio('16:9')" data-ratio="16:9">16:9</div>
+      <div class="ratio-btn active" onclick="changeRatio('4:3')" data-ratio="4:3">4:3</div>
+      <div class="ratio-btn" onclick="changeRatio('3:2')" data-ratio="3:2">3:2</div>
+      <div class="ratio-btn" onclick="changeRatio('1:1')" data-ratio="1:1">1:1</div>
+      <div class="ratio-btn" onclick="changeRatio('1200:630')" data-ratio="1200:630">1200:630</div>
+    </div>
+
+    <!-- Upload Box -->
+    <div class="upload-box">
+      <label for="fileUpload">📁 Upload Image</label>
+      <input type="file" id="fileUpload" accept="image/*">
+    </div>
+
+    <!-- Theme Selector -->
+    <div class="theme-selector">
+      <div class="theme cool" onclick="changeTheme('cool')"></div>
+      <div class="theme beach" onclick="changeTheme('beach')"></div>
+      <div class="theme violet" onclick="changeTheme('violet')"></div>
+      <div class="theme rose" onclick="changeTheme('rose')"></div>
+      <div class="theme sky" onclick="changeTheme('sky')"></div>
+      <div class="theme love" onclick="changeTheme('love')"></div>
+      <div class="theme sunset" onclick="changeTheme('sunset')"></div>
+      <div class="theme aqua" onclick="changeTheme('aqua')"></div>
+      <div class="theme mint" onclick="changeTheme('mint')"></div>
+      <div class="theme peach" onclick="changeTheme('peach')"></div>
+      <div class="theme dream" onclick="changeTheme('dream')"></div>
+      <div class="theme ice" onclick="changeTheme('ice')"></div>
+    </div>
+
+    <!-- Style Controls -->
+    <div class="control-panel">
+      <label for="rounded">🔵 Rounded 
+        <span class="value-display" id="roundedValue">16px</span>
+      </label>
+      <input type="range" id="rounded" min="0" max="200" value="16">
+
+      <label for="padding">📏 Padding 
+        <span class="value-display" id="paddingValue">60px</span>
+      </label>
+      <input type="range" id="padding" min="0" max="200" value="60">
+
+      <label for="shadow">🌫️ Shadow 
+        <span class="value-display" id="shadowValue">40</span>
+      </label>
+      <input type="range" id="shadow" min="0" max="100" value="40">
+
+      <label for="signature">✍️ Signature</label>
+      <input type="text" id="signature" placeholder="Your text signature..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+    </div>
+
+    <!-- Download Box -->
+    <div class="download-box">
+      <button class="download-btn" id="downloadBtn" onclick="downloadImage()" disabled>
+        📥 Download
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const themes = {
+      cool: 'linear-gradient(135deg, #a1c4fd, #c2e9fb)',
+      beach: 'linear-gradient(135deg, #00c9ff, #92fe9d)',
+      violet: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+      rose: 'linear-gradient(135deg, #fbc2eb, #a6c1ee)',
+      sky: 'linear-gradient(135deg, #89f7fe, #66a6ff)',
+      love: 'linear-gradient(135deg, #ff9a9e, #fad0c4)',
+      sunset: 'linear-gradient(135deg, #ff758c, #ff7eb3)',
+      aqua: 'linear-gradient(135deg, #13547a, #80d0c7)',
+      mint: 'linear-gradient(135deg, #d4fc79, #96e6a1)',
+      peach: 'linear-gradient(135deg, #ffecd2, #fcb69f)',
+      dream: 'linear-gradient(135deg, #c471f5, #fa71cd)',
+      ice: 'linear-gradient(135deg, #74ebd5, #9face6)'
+    };
+
+    const ratios = {
+      '16:9': 16/9,
+      '4:3': 4/3,
+      '3:2': 3/2,
+      '1:1': 1/1,
+      '1200:630': 1200/630
+    };
+
+    let currentRatio = '4:3';
+    let currentTheme = 'sky'; // Track current theme
+
+    function changeTheme(theme) {
+      currentTheme = theme;
+      document.getElementById('canvasFrame').style.background = themes[theme];
+    }
+
+    function changeRatio(ratio) {
+      currentRatio = ratio;
+      
+      // Update active button
+      document.querySelectorAll('.ratio-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-ratio="${ratio}"]`).classList.add('active');
+      
+      // Calculate frame dimensions
+      const frame = document.getElementById('canvasFrame');
+      const containerWidth = window.innerWidth - 280; // Account for control panels
+      const containerHeight = window.innerHeight - 120; // Account for top/bottom spacing
+      
+      const aspectRatio = ratios[ratio];
+      let width, height;
+      
+      // Calculate optimal size while maintaining aspect ratio
+      if (containerWidth / containerHeight > aspectRatio) {
+        // Height is the limiting factor
+        height = Math.min(containerHeight, 600);
+        width = height * aspectRatio;
+      } else {
+        // Width is the limiting factor
+        width = Math.min(containerWidth, 800);
+        height = width / aspectRatio;
+      }
+      
+      frame.style.width = width + 'px';
+      frame.style.height = height + 'px';
+      
+      // Update image size when ratio changes
+      updateImageSize();
+    }
+
+    // Initialize with default theme and ratio
+    changeTheme('sky');
+    changeRatio('4:3');
+    
+    // Initialize padding value display
+    document.getElementById('paddingValue').textContent = '60px';
+
+    // File upload handling
+    document.getElementById('fileUpload').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('previewImage').src = e.target.result;
+          document.getElementById('imageContainer').style.display = 'block';
+          document.getElementById('downloadBtn').disabled = false;
+          
+          // Set image size based on current canvas frame
+          updateImageSize();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Function to update image size based on canvas frame and padding
+    function updateImageSize() {
+      const frame = document.getElementById('canvasFrame');
+      const img = document.getElementById('previewImage');
+      const frameRect = frame.getBoundingClientRect();
+      const paddingValue = parseInt(document.getElementById('padding').value);
+      
+      // Calculate available space after padding
+      const maxWidth = frameRect.width - (paddingValue * 2);
+      const maxHeight = frameRect.height - (paddingValue * 2);
+      
+      img.style.maxWidth = maxWidth + 'px';
+      img.style.maxHeight = maxHeight + 'px';
+    }
+
+    // Live style controls with value display
+    const preview = document.getElementById('previewImage');
+    const container = document.getElementById('imageContainer');
+
+    document.getElementById('rounded').addEventListener('input', function() {
+      preview.style.borderRadius = this.value + 'px';
+      document.getElementById('roundedValue').textContent = this.value + 'px';
+    });
+
+    document.getElementById('padding').addEventListener('input', function() {
+      document.getElementById('paddingValue').textContent = this.value + 'px';
+      updateImageSize(); // Update image size based on new padding
+    });
+
+    document.getElementById('shadow').addEventListener('input', function() {
+      const val = this.value;
+      preview.style.boxShadow = `0 ${val / 2}px ${val}px rgba(0, 0, 0, 0.4)`;
+      document.getElementById('shadowValue').textContent = val;
+    });
+
+    document.getElementById('signature').addEventListener('input', function() {
+      const signatureText = document.getElementById('signatureText');
+      const text = this.value.trim();
+      
+      console.log('Signature input:', text); // Debug log
+      
+      if (text) {
+        signatureText.textContent = text;
+        signatureText.style.display = 'block';
+        signatureText.style.visibility = 'visible';
+      } else {
+        signatureText.style.display = 'none';
+        signatureText.style.visibility = 'hidden';
+      }
+    });
+
+    // Download functionality
+    function downloadImage() {
+      const frame = document.getElementById('canvasFrame');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size to match frame
+      const frameRect = frame.getBoundingClientRect();
+      canvas.width = frameRect.width * 2; // Higher resolution
+      canvas.height = frameRect.height * 2;
+      
+      // Scale context for higher resolution
+      ctx.scale(2, 2);
+      
+      // Get current theme and create proper gradient
+      const currentTheme = getCurrentTheme();
+      const gradient = createCanvasGradient(ctx, currentTheme, frameRect.width, frameRect.height);
+      
+      // Fill background with gradient
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, frameRect.width, frameRect.height);
+      
+      // Draw image if exists
+      const img = document.getElementById('previewImage');
+      if (img.src && img.offsetWidth > 0) {
+        const imgRect = img.getBoundingClientRect();
+        const frameOffset = frame.getBoundingClientRect();
+        
+        // Calculate image position relative to frame
+        const x = imgRect.left - frameOffset.left;
+        const y = imgRect.top - frameOffset.top;
+        
+        // Create image element for canvas
+        const image = new Image();
+        image.onload = function() {
+          // Apply border radius by clipping
+          const rounded = parseInt(document.getElementById('rounded').value);
+          if (rounded > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
+            ctx.clip();
+          }
+          
+          ctx.drawImage(image, x, y, imgRect.width, imgRect.height);
+          
+          if (rounded > 0) {
+            ctx.restore();
+          }
+          
+          // Add signature text if exists
+          const signatureInput = document.getElementById('signature');
+          if (signatureInput.value.trim()) {
+            ctx.fillStyle = 'white';
+            ctx.font = '18px Arial, sans-serif';
+            ctx.fontWeight = '600';
+            ctx.textAlign = 'center';
+            
+            const textX = frameRect.width / 2;
+            const textY = frameRect.height - 20;
+            ctx.fillText(signatureInput.value.trim(), textX, textY);
+          }
+          
+          // Download
+          const link = document.createElement('a');
+          link.download = `gradient-image-${currentRatio.replace(':', 'x')}.png`;
+          link.href = canvas.toDataURL();
+          link.click();
+        };
+        image.src = img.src;
+      } else {
+        // No image, just download background with signature if exists
+        const signatureInput = document.getElementById('signature');
+        if (signatureInput.value.trim()) {
+          ctx.fillStyle = 'white';
+          ctx.font = '18px Arial, sans-serif';
+          ctx.fontWeight = '600';
+          ctx.textAlign = 'center';
+          
+          const textX = frameRect.width / 2;
+          const textY = frameRect.height - 20;
+          ctx.fillText(signatureInput.value.trim(), textX, textY);
+        }
+        
+        const link = document.createElement('a');
+        link.download = `gradient-background-${currentRatio.replace(':', 'x')}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      }
+    }
+    
+    function getCurrentTheme() {
+      return currentTheme;
+    }
+    
+    function createCanvasGradient(ctx, themeName, width, height) {
+      // Define color pairs for each theme
+      const gradients = {
+        cool: ['#a1c4fd', '#c2e9fb'],
+        beach: ['#00c9ff', '#92fe9d'],
+        violet: ['#a18cd1', '#fbc2eb'],
+        rose: ['#fbc2eb', '#a6c1ee'],
+        sky: ['#89f7fe', '#66a6ff'],
+        love: ['#ff9a9e', '#fad0c4'],
+        sunset: ['#ff758c', '#ff7eb3'],
+        aqua: ['#13547a', '#80d0c7'],
+        mint: ['#d4fc79', '#96e6a1'],
+        peach: ['#ffecd2', '#fcb69f'],
+        dream: ['#c471f5', '#fa71cd'],
+        ice: ['#74ebd5', '#9face6']
+      };
+      
+      const colors = gradients[themeName] || gradients.sky;
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, colors[0]);
+      gradient.addColorStop(1, colors[1]);
+      
+      return gradient;
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+      changeRatio(currentRatio);
+      updateImageSize();
+    });
+  </script>
+</body>
+</html>
