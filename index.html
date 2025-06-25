@@ -39,6 +39,11 @@
       overflow: hidden;
     }
 
+    .canvas-frame.drag-over {
+      box-shadow: 0 20px 40px rgba(74, 144, 226, 0.5);
+      transform: scale(1.02);
+    }
+
     .image-container {
       position: absolute;
       top: 50%;
@@ -93,13 +98,63 @@
 
     .upload-box {
       position: absolute;
-      bottom: 20px;
-      left: 20px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 12px 16px;
-      border-radius: 12px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 32px 40px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 2px dashed rgba(74, 144, 226, 0.3);
+      max-width: 300px;
+    }
+
+    .upload-box:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      border-color: rgba(74, 144, 226, 0.6);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .upload-box.drag-over {
+      transform: translate(-50%, -50%) scale(1.1);
+      border-color: rgba(74, 144, 226, 0.8);
+      background: rgba(74, 144, 226, 0.1);
+      box-shadow: 0 30px 60px rgba(74, 144, 226, 0.3);
+    }
+
+    .upload-box h3 {
+      margin: 0 0 12px 0;
+      color: #333;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .upload-box p {
+      margin: 0 0 20px 0;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
     }
 
     .control-panel {
@@ -283,9 +338,13 @@
     </div>
 
     <!-- Upload Box -->
-    <div class="upload-box">
-      <label for="fileUpload">📁 Upload Image</label>
-      <input type="file" id="fileUpload" accept="image/*">
+    <div class="upload-box" id="uploadBox">
+      <h3>🎨 Create Amazing Images</h3>
+      <p>Drag & drop your image here<br>or click the button below</p>
+      <button class="upload-btn" onclick="document.getElementById('fileUpload').click()">
+        📁 Choose Image
+      </button>
+      <input type="file" id="fileUpload" accept="image/*" style="display: none;">
     </div>
 
     <!-- Theme Selector -->
@@ -445,18 +504,75 @@
     document.getElementById('fileUpload').addEventListener('change', function(event) {
       const file = event.target.files[0];
       if (file) {
+        handleImageFile(file);
+      }
+    });
+
+    // Function to handle image file (used by both upload and drag/drop)
+    function handleImageFile(file) {
+      if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = function(e) {
           document.getElementById('previewImage').src = e.target.result;
           document.getElementById('imageContainer').style.display = 'block';
           document.getElementById('downloadBtn').disabled = false;
           
+          // Hide upload box when image is loaded
+          document.getElementById('uploadBox').style.display = 'none';
+          
           // Set image size based on current canvas frame
           updateImageSize();
         };
         reader.readAsDataURL(file);
       }
-    });
+    }
+
+    // Drag and Drop functionality
+    const canvasFrame = document.getElementById('canvasFrame');
+    const uploadBox = document.getElementById('uploadBox');
+
+    // Add drag events to both canvas and upload box
+    function addDragEvents(element) {
+      element.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        canvasFrame.classList.add('drag-over');
+        uploadBox.classList.add('drag-over');
+      });
+
+      element.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        canvasFrame.classList.add('drag-over');
+        uploadBox.classList.add('drag-over');
+      });
+
+      element.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only remove if we're actually leaving the canvas area
+        if (!canvasFrame.contains(e.relatedTarget)) {
+          canvasFrame.classList.remove('drag-over');
+          uploadBox.classList.remove('drag-over');
+        }
+      });
+
+      element.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        canvasFrame.classList.remove('drag-over');
+        uploadBox.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleImageFile(files[0]);
+        }
+      });
+    }
+
+    // Apply drag events to both elements
+    addDragEvents(canvasFrame);
+    addDragEvents(uploadBox);
 
     // Function to update image size based on canvas frame and padding
     function updateImageSize() {
