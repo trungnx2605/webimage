@@ -708,27 +708,56 @@
         
         // Continue with image drawing
         drawImageAndSignature(ctx, frameRect, canvas);
-      } else if (currentThemeType === 'image') {
-        // Load background image first
-        const bgImage = new Image();
-        bgImage.crossOrigin = 'anonymous'; // Fix CORS issue
-        bgImage.onload = function() {
-          // Draw background image
-          ctx.drawImage(bgImage, 0, 0, frameRect.width, frameRect.height);
+            } else if (currentThemeType === 'image') {
+        // Since CORS is blocked, convert the background image to canvas for download
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = frameRect.width;
+        tempCanvas.height = frameRect.height;
+        
+        // Get the current background style from the frame
+        const currentBgImage = getComputedStyle(document.getElementById('canvasFrame')).backgroundImage;
+        
+        // Extract URL from CSS background-image property
+        const urlMatch = currentBgImage.match(/url\(["']?([^"']+)["']?\)/);
+        if (urlMatch) {
+          const bgImage = new Image();
           
-          // Continue with image drawing
-          drawImageAndSignature(ctx, frameRect, canvas);
-        };
-        bgImage.onerror = function() {
-          console.error('Failed to load background image:', bgImage.src);
-          // Fallback to gradient background
+          // Try without CORS first since it works for display
+          bgImage.onload = function() {
+            console.log('Background image loaded for canvas');
+            // Draw background image
+            ctx.drawImage(bgImage, 0, 0, frameRect.width, frameRect.height);
+            drawImageAndSignature(ctx, frameRect, canvas);
+          };
+          
+          bgImage.onerror = function() {
+            console.log('Image failed to load, using fallback color');
+            // Fallback: Create a themed color background
+            const fallbackColors = [
+              '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', 
+              '#ffecd2', '#a8edea', '#d299c2', '#89f7fe', '#667eea',
+              '#f093fb', '#4facfe'
+            ];
+            const colorIndex = (parseInt(currentImageTheme) - 1) % fallbackColors.length;
+            const gradient = ctx.createLinearGradient(0, 0, frameRect.width, frameRect.height);
+            gradient.addColorStop(0, fallbackColors[colorIndex]);
+            gradient.addColorStop(1, fallbackColors[(colorIndex + 1) % fallbackColors.length]);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, frameRect.width, frameRect.height);
+            drawImageAndSignature(ctx, frameRect, canvas);
+          };
+          
+          bgImage.src = urlMatch[1];
+        } else {
+          // No background image found, use fallback
+          console.log('No background image detected');
           const gradient = createCanvasGradient(ctx, 'sky', frameRect.width, frameRect.height);
           ctx.fillStyle = gradient;
           ctx.fillRect(0, 0, frameRect.width, frameRect.height);
           drawImageAndSignature(ctx, frameRect, canvas);
-        };
-        bgImage.src = `https://addbackground.app/image/${currentImageTheme}.jpg`;
-        return; // Exit here as the rest will be handled by bgImage.onload
+        }
+        return;
       }
     }
     
@@ -747,44 +776,31 @@
         const image = new Image();
         image.crossOrigin = 'anonymous'; // Fix CORS for uploaded images if needed
         image.onload = function() {
-          // Get shadow value
           const shadowValue = parseInt(document.getElementById('shadow').value);
           const rounded = parseInt(document.getElementById('rounded').value);
           
-          // Draw shadow first if shadow value > 0
+          // Apply shadow and border radius, then draw image
+          ctx.save();
+          
+          // Set shadow properties if shadow value > 0
           if (shadowValue > 0) {
-            ctx.save();
             ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
             ctx.shadowBlur = shadowValue;
             ctx.shadowOffsetX = shadowValue / 2;
             ctx.shadowOffsetY = shadowValue / 2;
-            
-            // Create a path for the shadow
-            if (rounded > 0) {
-              ctx.beginPath();
-              ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Invisible fill just to create shadow
-              ctx.fill();
-            } else {
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-              ctx.fillRect(x, y, imgRect.width, imgRect.height);
-            }
-            ctx.restore();
           }
           
-          // Apply border radius by clipping for the actual image
+          // Apply border radius by clipping
           if (rounded > 0) {
-            ctx.save();
             ctx.beginPath();
             ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
             ctx.clip();
           }
           
+          // Draw image with shadow and clipping applied
           ctx.drawImage(image, x, y, imgRect.width, imgRect.height);
           
-          if (rounded > 0) {
-            ctx.restore();
-          }
+          ctx.restore();
           
           // Add signature text if exists
           addSignatureToCanvas(ctx, frameRect);
