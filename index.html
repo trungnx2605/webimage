@@ -400,18 +400,18 @@
       
       <!-- Column 3 - Image Themes -->
       <div class="theme-column">
-        <div class="image-theme" onclick="changeImageTheme('1')" style="background-image: url('https://cdn.addbackground.app/image/1.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('2')" style="background-image: url('https://cdn.addbackground.app/image/2.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('3')" style="background-image: url('https://cdn.addbackground.app/image/3.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('4')" style="background-image: url('https://cdn.addbackground.app/image/4.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('5')" style="background-image: url('https://cdn.addbackground.app/image/5.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('6')" style="background-image: url('https://cdn.addbackground.app/image/6.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('7')" style="background-image: url('https://cdn.addbackground.app/image/7.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('8')" style="background-image: url('https://cdn.addbackground.app/image/8.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('9')" style="background-image: url('https://cdn.addbackground.app/image/9.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('10')" style="background-image: url('https://cdn.addbackground.app/image/10.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('11')" style="background-image: url('https://cdn.addbackground.app/image/11.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('12')" style="background-image: url('https://cdn.addbackground.app/image/12.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('1')" style="background-image: url('./image/1.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('2')" style="background-image: url('./image/2.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('3')" style="background-image: url('./image/3.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('4')" style="background-image: url('./image/4.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('5')" style="background-image: url('./image/5.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('6')" style="background-image: url('./image/6.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('7')" style="background-image: url('./image/7.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('8')" style="background-image: url('./image/8.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('9')" style="background-image: url('./image/9.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('10')" style="background-image: url('./image/10.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('11')" style="background-image: url('./image/11.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('12')" style="background-image: url('./image/12.jpg')"></div>
       </div>
     </div>
 
@@ -511,8 +511,8 @@
       // Clear gradient background first
       frame.style.background = 'transparent';
       
-      // Set image background properties using CDN URL
-      frame.style.backgroundImage = `url('https://cdn.addbackground.app/image/${imageNumber}.jpg')`;
+      // Set image background properties using local images
+      frame.style.backgroundImage = `url('./image/${imageNumber}.jpg')`;
       frame.style.backgroundSize = 'cover';
       frame.style.backgroundPosition = 'center';
       frame.style.backgroundRepeat = 'no-repeat';
@@ -709,54 +709,35 @@
         // Continue with image drawing
         drawImageAndSignature(ctx, frameRect, canvas);
             } else if (currentThemeType === 'image') {
-        // Since CORS is blocked, convert the background image to canvas for download
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCanvas.width = frameRect.width;
-        tempCanvas.height = frameRect.height;
+        // Load local background image for download
+        const bgImage = new Image();
         
-        // Get the current background style from the frame
-        const currentBgImage = getComputedStyle(document.getElementById('canvasFrame')).backgroundImage;
+        bgImage.onload = function() {
+          console.log('Background image loaded for canvas');
+          // Draw background image to cover the entire canvas
+          ctx.drawImage(bgImage, 0, 0, frameRect.width, frameRect.height);
+          drawImageAndSignature(ctx, frameRect, canvas);
+        };
         
-        // Extract URL from CSS background-image property
-        const urlMatch = currentBgImage.match(/url\(["']?([^"']+)["']?\)/);
-        if (urlMatch) {
-          const bgImage = new Image();
-          
-          // Try without CORS first since it works for display
-          bgImage.onload = function() {
-            console.log('Background image loaded for canvas');
-            // Draw background image
-            ctx.drawImage(bgImage, 0, 0, frameRect.width, frameRect.height);
-            drawImageAndSignature(ctx, frameRect, canvas);
-          };
-          
-          bgImage.onerror = function() {
-            console.log('Image failed to load, using fallback color');
-            // Fallback: Create a themed color background
-            const fallbackColors = [
-              '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', 
-              '#ffecd2', '#a8edea', '#d299c2', '#89f7fe', '#667eea',
-              '#f093fb', '#4facfe'
-            ];
-            const colorIndex = (parseInt(currentImageTheme) - 1) % fallbackColors.length;
-            const gradient = ctx.createLinearGradient(0, 0, frameRect.width, frameRect.height);
-            gradient.addColorStop(0, fallbackColors[colorIndex]);
-            gradient.addColorStop(1, fallbackColors[(colorIndex + 1) % fallbackColors.length]);
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, frameRect.width, frameRect.height);
-            drawImageAndSignature(ctx, frameRect, canvas);
-          };
-          
-          bgImage.src = urlMatch[1];
-        } else {
-          // No background image found, use fallback
-          console.log('No background image detected');
-          const gradient = createCanvasGradient(ctx, 'sky', frameRect.width, frameRect.height);
+        bgImage.onerror = function() {
+          console.log('Image failed to load, using fallback color');
+          // Fallback: Create a themed color background
+          const fallbackColors = [
+            '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', 
+            '#ffecd2', '#a8edea', '#d299c2', '#89f7fe', '#667eea',
+            '#f093fb', '#4facfe'
+          ];
+          const colorIndex = (parseInt(currentImageTheme) - 1) % fallbackColors.length;
+          const gradient = ctx.createLinearGradient(0, 0, frameRect.width, frameRect.height);
+          gradient.addColorStop(0, fallbackColors[colorIndex]);
+          gradient.addColorStop(1, fallbackColors[(colorIndex + 1) % fallbackColors.length]);
           ctx.fillStyle = gradient;
           ctx.fillRect(0, 0, frameRect.width, frameRect.height);
           drawImageAndSignature(ctx, frameRect, canvas);
-        }
+        };
+        
+        // Use local image path
+        bgImage.src = `./image/${currentImageTheme}.jpg`;
         return;
       }
     }
@@ -779,25 +760,41 @@
           const shadowValue = parseInt(document.getElementById('shadow').value);
           const rounded = parseInt(document.getElementById('rounded').value);
           
-          // Apply shadow and border radius, then draw image
           ctx.save();
           
-          // Set shadow properties if shadow value > 0
+          // First, draw the shadow if needed
           if (shadowValue > 0) {
             ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
             ctx.shadowBlur = shadowValue;
             ctx.shadowOffsetX = shadowValue / 2;
             ctx.shadowOffsetY = shadowValue / 2;
+            
+            // Create a path for the shadow (with rounded corners if needed)
+            if (rounded > 0) {
+              ctx.beginPath();
+              ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Temporary fill for shadow
+              ctx.fill();
+            } else {
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Temporary fill for shadow
+              ctx.fillRect(x, y, imgRect.width, imgRect.height);
+            }
+            
+            // Reset shadow for actual image drawing
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
           }
           
-          // Apply border radius by clipping
+          // Apply border radius clipping for the actual image
           if (rounded > 0) {
             ctx.beginPath();
             ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
             ctx.clip();
           }
           
-          // Draw image with shadow and clipping applied
+          // Draw the actual image
           ctx.drawImage(image, x, y, imgRect.width, imgRect.height);
           
           ctx.restore();
