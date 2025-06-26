@@ -660,56 +660,64 @@
         return;
       }
       
-      // Calculate frame size based on selected ratio
-      const containerWidth = window.innerWidth - 280; // Account for control panels
-      const containerHeight = window.innerHeight - 120; // Account for top/bottom spacing
-      const aspectRatio = ratios[currentRatio];
-      
-      let frameWidth, frameHeight;
-      
-      // Calculate frame size to fit screen while maintaining selected ratio
-      if (containerWidth / containerHeight > aspectRatio) {
-        // Height is the limiting factor
-        frameHeight = Math.min(containerHeight, 600);
-        frameWidth = frameHeight * aspectRatio;
-      } else {
-        // Width is the limiting factor
-        frameWidth = Math.min(containerWidth, 800);
-        frameHeight = frameWidth / aspectRatio;
-      }
-      
-      // Set frame size based on ratio
-      frame.style.width = frameWidth + 'px';
-      frame.style.height = frameHeight + 'px';
-      
-      // Calculate image display size to fit within frame with padding
-      const availableWidth = frameWidth - (paddingValue * 2);
-      const availableHeight = frameHeight - (paddingValue * 2);
-      
-      // Scale image to fit available space while maintaining its aspect ratio
+      // Calculate display scale for the image (keep it reasonably sized for screen)
+      const maxDisplaySize = 400; // Maximum image display size
       const imageAspectRatio = originalImageData.naturalWidth / originalImageData.naturalHeight;
       let displayImageWidth, displayImageHeight;
       
-      if (availableWidth / availableHeight > imageAspectRatio) {
-        // Height is limiting factor
-        displayImageHeight = availableHeight;
-        displayImageWidth = displayImageHeight * imageAspectRatio;
-      } else {
-        // Width is limiting factor
-        displayImageWidth = availableWidth;
+      if (originalImageData.naturalWidth > originalImageData.naturalHeight) {
+        displayImageWidth = Math.min(maxDisplaySize, originalImageData.naturalWidth);
         displayImageHeight = displayImageWidth / imageAspectRatio;
+      } else {
+        displayImageHeight = Math.min(maxDisplaySize, originalImageData.naturalHeight);
+        displayImageWidth = displayImageHeight * imageAspectRatio;
       }
       
-      // Set image size
+      // Calculate minimum frame size needed (image + padding)
+      const minFrameWidth = displayImageWidth + (paddingValue * 2);
+      const minFrameHeight = displayImageHeight + (paddingValue * 2);
+      
+      // Calculate frame size based on ratio, ensuring it fits the image + padding
+      const aspectRatio = ratios[currentRatio];
+      let frameWidth, frameHeight;
+      
+      if (minFrameWidth / minFrameHeight > aspectRatio) {
+        // Width is the limiting factor
+        frameWidth = minFrameWidth;
+        frameHeight = frameWidth / aspectRatio;
+      } else {
+        // Height is the limiting factor
+        frameHeight = minFrameHeight;
+        frameWidth = frameHeight * aspectRatio;
+      }
+      
+      // Scale down if too big for screen
+      const containerWidth = window.innerWidth - 280;
+      const containerHeight = window.innerHeight - 120;
+      const scaleX = containerWidth / frameWidth;
+      const scaleY = containerHeight / frameHeight;
+      const scale = Math.min(scaleX, scaleY, 1);
+      
+      frameWidth *= scale;
+      frameHeight *= scale;
+      displayImageWidth *= scale;
+      displayImageHeight *= scale;
+      const scaledPadding = paddingValue * scale;
+      
+      // Set frame size
+      frame.style.width = frameWidth + 'px';
+      frame.style.height = frameHeight + 'px';
+      
+      // Set image size (fixed size, not affected by padding)
       img.style.width = displayImageWidth + 'px';
       img.style.height = displayImageHeight + 'px';
       img.style.maxWidth = 'none';
       img.style.maxHeight = 'none';
       
-      // Center the image with padding
-      document.getElementById('imageContainer').style.padding = paddingValue + 'px';
+      // Remove padding from container - image will be centered by CSS
+      document.getElementById('imageContainer').style.padding = '0px';
       
-      console.log('Preview: Frame', frameWidth + 'x' + frameHeight, '(' + currentRatio + ')', 'Image', displayImageWidth + 'x' + displayImageHeight, 'Padding', paddingValue);
+      console.log('Preview: Frame', frameWidth + 'x' + frameHeight, '(' + currentRatio + ')', 'Image', displayImageWidth + 'x' + displayImageHeight, 'Scaled padding', scaledPadding);
     }
 
     // Live style controls with value display
