@@ -929,18 +929,14 @@
             } else if (currentThemeType === 'image') {
         // Load CDN background image for download
         const bgImage = new Image();
-        bgImage.crossOrigin = 'anonymous'; // Enable CORS for CDN images
+        let imageLoaded = false;
         
-        bgImage.onload = function() {
-          console.log('Background image loaded for canvas');
-          // Draw background image to cover the entire canvas
-          ctx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
-          drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
-        };
-        
-        bgImage.onerror = function() {
-          console.log('CDN image failed to load, using fallback color');
-          // Fallback: Create a themed color background
+        // Function to handle fallback
+        const useFallback = function(reason) {
+          if (imageLoaded) return; // Prevent multiple executions
+          imageLoaded = true;
+          console.log('Using fallback background, reason:', reason);
+          
           const fallbackColors = [
             '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', 
             '#ffecd2', '#a8edea', '#d299c2', '#89f7fe', '#667eea',
@@ -955,8 +951,40 @@
           drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
         };
         
-        // Use CDN image path
-        bgImage.src = `https://cdn.addbackground.app/image/${currentImageTheme}.jpg`;
+        bgImage.onload = function() {
+          if (imageLoaded) return; // Prevent multiple executions
+          imageLoaded = true;
+          console.log('Background image loaded successfully:', bgImage.src);
+          console.log('Image dimensions:', bgImage.naturalWidth, 'x', bgImage.naturalHeight);
+          // Draw background image to cover the entire canvas
+          ctx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
+          drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
+        };
+        
+        bgImage.onerror = function(e) {
+          console.error('CDN image failed to load:', bgImage.src, e);
+          useFallback('Image load error');
+        };
+        
+        // Set timeout for slow loading images
+        setTimeout(() => {
+          if (!imageLoaded) {
+            console.warn('Image loading timeout after 10 seconds');
+            useFallback('Timeout');
+          }
+        }, 10000);
+        
+        // Try different CORS settings to handle CDN
+        try {
+          bgImage.crossOrigin = 'anonymous';
+        } catch (e) {
+          console.warn('CORS setting failed:', e);
+        }
+        
+        // Use CDN image path with cache busting
+        const imageUrl = `https://cdn.addbackground.app/image/${currentImageTheme}.jpg?t=${Date.now()}`;
+        console.log('Loading background image:', imageUrl);
+        bgImage.src = imageUrl;
         return;
       }
     }
