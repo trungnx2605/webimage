@@ -760,44 +760,42 @@
           const shadowValue = parseInt(document.getElementById('shadow').value);
           const rounded = parseInt(document.getElementById('rounded').value);
           
-          ctx.save();
-          
-          // First, draw the shadow if needed
+          // Draw shadow first if needed (before clipping)
           if (shadowValue > 0) {
+            ctx.save();
             ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
             ctx.shadowBlur = shadowValue;
             ctx.shadowOffsetX = shadowValue / 2;
             ctx.shadowOffsetY = shadowValue / 2;
             
-            // Create a path for the shadow (with rounded corners if needed)
+            // Create a temporary canvas to draw the image with rounded corners
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = imgRect.width;
+            tempCanvas.height = imgRect.height;
+            
+            // Draw image to temp canvas with rounded corners
+            if (rounded > 0) {
+              tempCtx.beginPath();
+              tempCtx.roundRect(0, 0, imgRect.width, imgRect.height, rounded);
+              tempCtx.clip();
+            }
+            tempCtx.drawImage(image, 0, 0, imgRect.width, imgRect.height);
+            
+            // Draw the temp canvas with shadow to main canvas
+            ctx.drawImage(tempCanvas, x, y);
+            ctx.restore();
+          } else {
+            // No shadow, just draw normally with clipping
+            ctx.save();
             if (rounded > 0) {
               ctx.beginPath();
               ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Temporary fill for shadow
-              ctx.fill();
-            } else {
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Temporary fill for shadow
-              ctx.fillRect(x, y, imgRect.width, imgRect.height);
+              ctx.clip();
             }
-            
-            // Reset shadow for actual image drawing
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            ctx.drawImage(image, x, y, imgRect.width, imgRect.height);
+            ctx.restore();
           }
-          
-          // Apply border radius clipping for the actual image
-          if (rounded > 0) {
-            ctx.beginPath();
-            ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
-            ctx.clip();
-          }
-          
-          // Draw the actual image
-          ctx.drawImage(image, x, y, imgRect.width, imgRect.height);
-          
-          ctx.restore();
           
           // Add signature text if exists
           addSignatureToCanvas(ctx, frameRect);
