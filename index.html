@@ -425,7 +425,7 @@
       <label for="padding">📏 Padding 
         <span class="value-display" id="paddingValue">60px</span>
       </label>
-      <input type="range" id="padding" min="0" max="200" value="60">
+      <input type="range" id="padding" min="0" max="1000" value="60">
 
       <label for="shadow">🌫️ Shadow 
         <span class="value-display" id="shadowValue">40</span>
@@ -587,6 +587,9 @@
               naturalHeight: previewImg.naturalHeight
             };
             console.log('Original image size:', originalImageData.naturalWidth, 'x', originalImageData.naturalHeight);
+            
+            // Apply initial padding and sizing immediately
+            updateImageSize();
           };
           
           document.getElementById('imageContainer').style.display = 'block';
@@ -661,7 +664,7 @@
       }
       
       // Calculate display scale for the image (keep it reasonably sized for screen)
-      const maxDisplaySize = 400; // Maximum image display size
+      const maxDisplaySize = 560; // Maximum image display size (1.4x bigger)
       const imageAspectRatio = originalImageData.naturalWidth / originalImageData.naturalHeight;
       let displayImageWidth, displayImageHeight;
       
