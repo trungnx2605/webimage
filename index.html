@@ -711,11 +711,20 @@
       } else if (currentThemeType === 'image') {
         // Load background image first
         const bgImage = new Image();
+        bgImage.crossOrigin = 'anonymous'; // Fix CORS issue
         bgImage.onload = function() {
           // Draw background image
           ctx.drawImage(bgImage, 0, 0, frameRect.width, frameRect.height);
           
           // Continue with image drawing
+          drawImageAndSignature(ctx, frameRect, canvas);
+        };
+        bgImage.onerror = function() {
+          console.error('Failed to load background image:', bgImage.src);
+          // Fallback to gradient background
+          const gradient = createCanvasGradient(ctx, 'sky', frameRect.width, frameRect.height);
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, frameRect.width, frameRect.height);
           drawImageAndSignature(ctx, frameRect, canvas);
         };
         bgImage.src = `https://addbackground.app/image/${currentImageTheme}.jpg`;
@@ -736,9 +745,34 @@
         
         // Create image element for canvas
         const image = new Image();
+        image.crossOrigin = 'anonymous'; // Fix CORS for uploaded images if needed
         image.onload = function() {
-          // Apply border radius by clipping
+          // Get shadow value
+          const shadowValue = parseInt(document.getElementById('shadow').value);
           const rounded = parseInt(document.getElementById('rounded').value);
+          
+          // Draw shadow first if shadow value > 0
+          if (shadowValue > 0) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = shadowValue;
+            ctx.shadowOffsetX = shadowValue / 2;
+            ctx.shadowOffsetY = shadowValue / 2;
+            
+            // Create a path for the shadow
+            if (rounded > 0) {
+              ctx.beginPath();
+              ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Invisible fill just to create shadow
+              ctx.fill();
+            } else {
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+              ctx.fillRect(x, y, imgRect.width, imgRect.height);
+            }
+            ctx.restore();
+          }
+          
+          // Apply border radius by clipping for the actual image
           if (rounded > 0) {
             ctx.save();
             ctx.beginPath();
