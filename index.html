@@ -927,8 +927,7 @@
         // Continue with image drawing
         drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
             } else if (currentThemeType === 'image') {
-        // Load CDN background image for download
-        const bgImage = new Image();
+        // Load CDN background image for download using fetch to bypass CORS
         let imageLoaded = false;
         
         // Function to handle fallback
@@ -951,40 +950,92 @@
           drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
         };
         
-        bgImage.onload = function() {
-          if (imageLoaded) return; // Prevent multiple executions
-          imageLoaded = true;
-          console.log('Background image loaded successfully:', bgImage.src);
-          console.log('Image dimensions:', bgImage.naturalWidth, 'x', bgImage.naturalHeight);
-          // Draw background image to cover the entire canvas
-          ctx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
-          drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
+        // Try multiple approaches to load the image
+        const baseImageUrl = `https://cdn.addbackground.app/image/${currentImageTheme}.jpg`;
+        console.log('Loading background image:', baseImageUrl);
+        
+        // Method 1: Try direct loading with CORS (might work if server is configured properly)
+        const tryDirectLoad = () => {
+          const bgImage = new Image();
+          bgImage.crossOrigin = 'anonymous';
+          
+          bgImage.onload = function() {
+            if (imageLoaded) return;
+            imageLoaded = true;
+            console.log('Background image loaded successfully (direct method)');
+            console.log('Image dimensions:', bgImage.naturalWidth, 'x', bgImage.naturalHeight);
+            ctx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
+            drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
+          };
+          
+          bgImage.onerror = function() {
+            console.log('Direct loading failed, trying proxy method...');
+            tryProxyLoad();
+          };
+          
+          bgImage.src = baseImageUrl;
         };
         
-        bgImage.onerror = function(e) {
-          console.error('CDN image failed to load:', bgImage.src, e);
-          useFallback('Image load error');
+                 // Method 2: Try using a CORS proxy
+        const tryProxyLoad = () => {
+          const proxyUrl = `https://cors-anywhere.herokuapp.com/${baseImageUrl}`;
+          
+          fetch(proxyUrl, {
+            method: 'GET',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.blob();
+          })
+          .then(blob => {
+            // Create object URL from blob
+            const blobUrl = URL.createObjectURL(blob);
+            const bgImage = new Image();
+            
+            bgImage.onload = function() {
+              if (imageLoaded) return;
+              imageLoaded = true;
+              console.log('Background image loaded successfully via proxy');
+              console.log('Image dimensions:', bgImage.naturalWidth, 'x', bgImage.naturalHeight);
+              
+              // Draw background image to cover the entire canvas
+              ctx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
+              drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
+              
+              // Clean up the blob URL
+              URL.revokeObjectURL(blobUrl);
+            };
+            
+            bgImage.onerror = function(e) {
+              console.error('Proxy image failed to load:', e);
+              URL.revokeObjectURL(blobUrl);
+              useFallback('Proxy image error');
+            };
+            
+            bgImage.src = blobUrl;
+          })
+          .catch(error => {
+            console.error('Proxy fetch failed:', error);
+            useFallback('Proxy fetch error: ' + error.message);
+          });
         };
         
-        // Set timeout for slow loading images
+        // Start with direct loading
+        tryDirectLoad();
+        
+        // Set timeout for the entire process
         setTimeout(() => {
           if (!imageLoaded) {
-            console.warn('Image loading timeout after 10 seconds');
+            console.warn('Image loading timeout after 15 seconds');
             useFallback('Timeout');
           }
-        }, 10000);
+        }, 15000);
         
-        // Try different CORS settings to handle CDN
-        try {
-          bgImage.crossOrigin = 'anonymous';
-        } catch (e) {
-          console.warn('CORS setting failed:', e);
-        }
-        
-        // Use CDN image path with cache busting
-        const imageUrl = `https://cdn.addbackground.app/image/${currentImageTheme}.jpg?t=${Date.now()}`;
-        console.log('Loading background image:', imageUrl);
-        bgImage.src = imageUrl;
         return;
       }
     }
