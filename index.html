@@ -456,18 +456,18 @@
       
       <!-- Column 3 - Image Themes -->
       <div class="theme-column">
-        <div class="image-theme" onclick="changeImageTheme('1')" style="background-image: url('./image/1.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('2')" style="background-image: url('./image/2.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('3')" style="background-image: url('./image/3.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('4')" style="background-image: url('./image/4.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('5')" style="background-image: url('./image/5.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('6')" style="background-image: url('./image/6.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('7')" style="background-image: url('./image/7.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('8')" style="background-image: url('./image/8.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('9')" style="background-image: url('./image/9.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('10')" style="background-image: url('./image/10.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('11')" style="background-image: url('./image/11.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('12')" style="background-image: url('./image/12.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('1')" style="background-image: url('https://cdn.addbackground.app/image/1.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('2')" style="background-image: url('https://cdn.addbackground.app/image/2.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('3')" style="background-image: url('https://cdn.addbackground.app/image/3.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('4')" style="background-image: url('https://cdn.addbackground.app/image/4.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('5')" style="background-image: url('https://cdn.addbackground.app/image/5.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('6')" style="background-image: url('https://cdn.addbackground.app/image/6.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('7')" style="background-image: url('https://cdn.addbackground.app/image/7.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('8')" style="background-image: url('https://cdn.addbackground.app/image/8.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('9')" style="background-image: url('https://cdn.addbackground.app/image/9.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('10')" style="background-image: url('https://cdn.addbackground.app/image/10.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('11')" style="background-image: url('https://cdn.addbackground.app/image/11.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('12')" style="background-image: url('https://cdn.addbackground.app/image/12.jpg')"></div>
       </div>
     </div>
 
@@ -586,8 +586,8 @@
       // Clear gradient background first
       frame.style.background = 'transparent';
       
-      // Set image background properties using local images
-      frame.style.backgroundImage = `url('./image/${imageNumber}.jpg')`;
+      // Set image background properties using CDN images
+      frame.style.backgroundImage = `url('https://cdn.addbackground.app/image/${imageNumber}.jpg')`;
       frame.style.backgroundSize = 'cover';
       frame.style.backgroundPosition = 'center';
       frame.style.backgroundRepeat = 'no-repeat';
@@ -927,8 +927,9 @@
         // Continue with image drawing
         drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
             } else if (currentThemeType === 'image') {
-        // Load local background image for download
+        // Load CDN background image for download
         const bgImage = new Image();
+        bgImage.crossOrigin = 'anonymous'; // Enable CORS for CDN images
         
         bgImage.onload = function() {
           console.log('Background image loaded for canvas');
@@ -938,7 +939,7 @@
         };
         
         bgImage.onerror = function() {
-          console.log('Image failed to load, using fallback color');
+          console.log('CDN image failed to load, using fallback color');
           // Fallback: Create a themed color background
           const fallbackColors = [
             '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', 
@@ -954,8 +955,8 @@
           drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
         };
         
-        // Use local image path
-        bgImage.src = `./image/${currentImageTheme}.jpg`;
+        // Use CDN image path
+        bgImage.src = `https://cdn.addbackground.app/image/${currentImageTheme}.jpg`;
         return;
       }
     }
