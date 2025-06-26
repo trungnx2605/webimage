@@ -673,9 +673,15 @@
         displayImageWidth = displayImageHeight * imageAspectRatio;
       }
       
-      // Calculate minimum frame size needed (image + padding)
-      const minFrameWidth = displayImageWidth + (paddingValue * 2);
-      const minFrameHeight = displayImageHeight + (paddingValue * 2);
+      // Calculate the scale factor between original and display image
+      const imageScale = displayImageWidth / originalImageData.naturalWidth;
+      
+      // Scale padding proportionally to maintain visual relationship
+      const scaledPaddingValue = paddingValue * imageScale;
+      
+      // Calculate minimum frame size needed (image + scaled padding)
+      const minFrameWidth = displayImageWidth + (scaledPaddingValue * 2);
+      const minFrameHeight = displayImageHeight + (scaledPaddingValue * 2);
       
       // Calculate frame size based on ratio, ensuring it fits the image + padding
       const aspectRatio = ratios[currentRatio];
@@ -702,7 +708,7 @@
       frameHeight *= scale;
       displayImageWidth *= scale;
       displayImageHeight *= scale;
-      const scaledPadding = paddingValue * scale;
+      const finalScaledPadding = scaledPaddingValue * scale;
       
       // Set frame size
       frame.style.width = frameWidth + 'px';
@@ -717,7 +723,7 @@
       // Remove padding from container - image will be centered by CSS
       document.getElementById('imageContainer').style.padding = '0px';
       
-      console.log('Preview: Frame', frameWidth + 'x' + frameHeight, '(' + currentRatio + ')', 'Image', displayImageWidth + 'x' + displayImageHeight, 'Scaled padding', scaledPadding);
+      console.log('Preview: Frame', frameWidth + 'x' + frameHeight, '(' + currentRatio + ')', 'Image', displayImageWidth + 'x' + displayImageHeight, 'Original padding', paddingValue, 'Scaled padding', finalScaledPadding.toFixed(1));
     }
 
     // Live style controls with value display
