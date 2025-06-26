@@ -96,6 +96,23 @@
       transform: scale(1.1);
     }
 
+    .image-theme {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .image-theme:hover {
+      transform: scale(1.1);
+    }
+
     .upload-box {
       position: absolute;
       top: 50%;
@@ -380,6 +397,22 @@
         <div class="theme cherry" onclick="changeTheme('cherry')"></div>
         <div class="theme steel" onclick="changeTheme('steel')"></div>
       </div>
+      
+      <!-- Column 3 - Image Themes -->
+      <div class="theme-column">
+        <div class="image-theme" onclick="changeImageTheme('1')" style="background-image: url('image/1.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('2')" style="background-image: url('image/2.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('3')" style="background-image: url('image/3.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('4')" style="background-image: url('image/4.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('5')" style="background-image: url('image/5.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('6')" style="background-image: url('image/6.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('7')" style="background-image: url('image/7.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('8')" style="background-image: url('image/8.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('9')" style="background-image: url('image/9.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('10')" style="background-image: url('image/10.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('11')" style="background-image: url('image/11.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('12')" style="background-image: url('image/12.jpg')"></div>
+      </div>
     </div>
 
     <!-- Style Controls -->
@@ -452,10 +485,37 @@
 
     let currentRatio = '4:3';
     let currentTheme = 'sky'; // Track current theme
+    let currentThemeType = 'gradient'; // 'gradient' or 'image'
+    let currentImageTheme = '1'; // Track current image theme
 
     function changeTheme(theme) {
       currentTheme = theme;
-      document.getElementById('canvasFrame').style.background = themes[theme];
+      currentThemeType = 'gradient';
+      const frame = document.getElementById('canvasFrame');
+      
+      // Clear all background image properties first
+      frame.style.backgroundImage = 'none';
+      frame.style.backgroundSize = '';
+      frame.style.backgroundPosition = '';
+      frame.style.backgroundRepeat = '';
+      
+      // Set the gradient background
+      frame.style.background = themes[theme];
+    }
+
+    function changeImageTheme(imageNumber) {
+      currentImageTheme = imageNumber;
+      currentThemeType = 'image';
+      const frame = document.getElementById('canvasFrame');
+      
+      // Clear gradient background first
+      frame.style.background = 'transparent';
+      
+      // Set image background properties
+      frame.style.backgroundImage = `url('image/${imageNumber}.jpg')`;
+      frame.style.backgroundSize = 'cover';
+      frame.style.backgroundPosition = 'center';
+      frame.style.backgroundRepeat = 'no-repeat';
     }
 
     function changeRatio(ratio) {
@@ -639,19 +699,36 @@
       // Scale context for higher resolution
       ctx.scale(2, 2);
       
-      // Get current theme and create proper gradient
-      const currentTheme = getCurrentTheme();
-      const gradient = createCanvasGradient(ctx, currentTheme, frameRect.width, frameRect.height);
-      
-      // Fill background with gradient
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, frameRect.width, frameRect.height);
-      
+      // Handle background based on theme type
+      if (currentThemeType === 'gradient') {
+        // Get current theme and create proper gradient
+        const gradient = createCanvasGradient(ctx, currentTheme, frameRect.width, frameRect.height);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, frameRect.width, frameRect.height);
+        
+        // Continue with image drawing
+        drawImageAndSignature(ctx, frameRect, canvas);
+      } else if (currentThemeType === 'image') {
+        // Load background image first
+        const bgImage = new Image();
+        bgImage.onload = function() {
+          // Draw background image
+          ctx.drawImage(bgImage, 0, 0, frameRect.width, frameRect.height);
+          
+          // Continue with image drawing
+          drawImageAndSignature(ctx, frameRect, canvas);
+        };
+        bgImage.src = `image/${currentImageTheme}.jpg`;
+        return; // Exit here as the rest will be handled by bgImage.onload
+      }
+    }
+    
+    function drawImageAndSignature(ctx, frameRect, canvas) {
       // Draw image if exists
       const img = document.getElementById('previewImage');
       if (img.src && img.offsetWidth > 0) {
         const imgRect = img.getBoundingClientRect();
-        const frameOffset = frame.getBoundingClientRect();
+        const frameOffset = document.getElementById('canvasFrame').getBoundingClientRect();
         
         // Calculate image position relative to frame
         const x = imgRect.left - frameOffset.left;
@@ -676,49 +753,42 @@
           }
           
           // Add signature text if exists
-          const signatureInput = document.getElementById('signature');
-          if (signatureInput.value.trim()) {
-            ctx.fillStyle = 'white';
-            ctx.font = '18px Arial, sans-serif';
-            ctx.fontWeight = '600';
-            ctx.textAlign = 'center';
-            
-            const textX = frameRect.width / 2;
-            const textY = frameRect.height - 20;
-            ctx.fillText(signatureInput.value.trim(), textX, textY);
-          }
+          addSignatureToCanvas(ctx, frameRect);
           
           // Download
-          const link = document.createElement('a');
-          link.download = `gradient-image-${currentRatio.replace(':', 'x')}.png`;
-          link.href = canvas.toDataURL();
-          link.click();
+          downloadCanvas(canvas, currentThemeType);
         };
         image.src = img.src;
       } else {
         // No image, just download background with signature if exists
-        const signatureInput = document.getElementById('signature');
-        if (signatureInput.value.trim()) {
-          ctx.fillStyle = 'white';
-          ctx.font = '18px Arial, sans-serif';
-          ctx.fontWeight = '600';
-          ctx.textAlign = 'center';
-          
-          const textX = frameRect.width / 2;
-          const textY = frameRect.height - 20;
-          ctx.fillText(signatureInput.value.trim(), textX, textY);
-        }
-        
-        const link = document.createElement('a');
-        link.download = `gradient-background-${currentRatio.replace(':', 'x')}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+        addSignatureToCanvas(ctx, frameRect);
+        downloadCanvas(canvas, currentThemeType);
       }
     }
     
-    function getCurrentTheme() {
-      return currentTheme;
+    function addSignatureToCanvas(ctx, frameRect) {
+      const signatureInput = document.getElementById('signature');
+      if (signatureInput.value.trim()) {
+        ctx.fillStyle = 'white';
+        ctx.font = '18px Arial, sans-serif';
+        ctx.fontWeight = '600';
+        ctx.textAlign = 'center';
+        
+        const textX = frameRect.width / 2;
+        const textY = frameRect.height - 20;
+        ctx.fillText(signatureInput.value.trim(), textX, textY);
+      }
     }
+    
+    function downloadCanvas(canvas, themeType) {
+      const link = document.createElement('a');
+      const prefix = themeType === 'image' ? 'image-background' : 'gradient-background';
+      link.download = `${prefix}-${currentRatio.replace(':', 'x')}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+    
+
     
     function createCanvasGradient(ctx, themeName, width, height) {
       // Define color pairs for each theme
