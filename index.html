@@ -963,14 +963,23 @@
     function addSignatureToCanvas(ctx, canvasWidth, canvasHeight) {
       const signatureInput = document.getElementById('signature');
       if (signatureInput.value.trim()) {
+        // Calculate font size proportional to canvas size
+        // Base: 18px for ~800px width canvas (like preview)
+        const baseFontSize = 18;
+        const baseCanvasWidth = 800;
+        const scaledFontSize = Math.max(12, (canvasWidth / baseCanvasWidth) * baseFontSize);
+        const scaledMargin = Math.max(10, (canvasWidth / baseCanvasWidth) * 20);
+        
         ctx.fillStyle = 'white';
-        ctx.font = '18px Arial, sans-serif';
+        ctx.font = `${scaledFontSize}px Arial, sans-serif`;
         ctx.fontWeight = '600';
         ctx.textAlign = 'center';
         
         const textX = canvasWidth / 2;
-        const textY = canvasHeight - 20;
+        const textY = canvasHeight - scaledMargin;
         ctx.fillText(signatureInput.value.trim(), textX, textY);
+        
+        console.log('Signature: Font size', scaledFontSize.toFixed(1) + 'px', 'Margin', scaledMargin.toFixed(1) + 'px');
       }
     }
     
