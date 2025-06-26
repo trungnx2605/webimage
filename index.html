@@ -726,6 +726,17 @@
       // Remove padding from container - image will be centered by CSS
       document.getElementById('imageContainer').style.padding = '0px';
       
+      // Update scaled rounded corners and shadow to match new image size
+      const roundedValue = parseInt(document.getElementById('rounded').value);
+      const shadowValue = parseInt(document.getElementById('shadow').value);
+      const newScale = displayImageWidth / originalImageData.naturalWidth;
+      
+      const scaledRounded = roundedValue * newScale;
+      const scaledShadow = shadowValue * newScale;
+      
+      img.style.borderRadius = scaledRounded + 'px';
+      img.style.boxShadow = `0 ${scaledShadow / 2}px ${scaledShadow}px rgba(0, 0, 0, 0.4)`;
+      
       console.log('Preview: Frame', frameWidth + 'x' + frameHeight, '(' + currentRatio + ')', 'Image', displayImageWidth + 'x' + displayImageHeight, 'Original padding', paddingValue, 'Scaled padding', finalScaledPadding.toFixed(1));
     }
 
@@ -734,8 +745,20 @@
     const container = document.getElementById('imageContainer');
 
     document.getElementById('rounded').addEventListener('input', function() {
-      preview.style.borderRadius = this.value + 'px';
-      document.getElementById('roundedValue').textContent = this.value + 'px';
+      const roundedValue = parseInt(this.value);
+      
+      // Scale rounded corners proportionally for preview
+      if (originalImageData) {
+        const previewImg = document.getElementById('previewImage');
+        const currentImgWidth = parseFloat(previewImg.style.width) || previewImg.offsetWidth;
+        const scale = currentImgWidth / originalImageData.naturalWidth;
+        const scaledRounded = roundedValue * scale;
+        preview.style.borderRadius = scaledRounded + 'px';
+      } else {
+        preview.style.borderRadius = roundedValue + 'px';
+      }
+      
+      document.getElementById('roundedValue').textContent = roundedValue + 'px';
     });
 
     document.getElementById('padding').addEventListener('input', function() {
@@ -746,9 +769,20 @@
     });
 
     document.getElementById('shadow').addEventListener('input', function() {
-      const val = this.value;
-      preview.style.boxShadow = `0 ${val / 2}px ${val}px rgba(0, 0, 0, 0.4)`;
-      document.getElementById('shadowValue').textContent = val;
+      const shadowValue = parseInt(this.value);
+      
+      // Scale shadow proportionally for preview
+      if (originalImageData) {
+        const previewImg = document.getElementById('previewImage');
+        const currentImgWidth = parseFloat(previewImg.style.width) || previewImg.offsetWidth;
+        const scale = currentImgWidth / originalImageData.naturalWidth;
+        const scaledShadow = shadowValue * scale;
+        preview.style.boxShadow = `0 ${scaledShadow / 2}px ${scaledShadow}px rgba(0, 0, 0, 0.4)`;
+      } else {
+        preview.style.boxShadow = `0 ${shadowValue / 2}px ${shadowValue}px rgba(0, 0, 0, 0.4)`;
+      }
+      
+      document.getElementById('shadowValue').textContent = shadowValue;
     });
 
     document.getElementById('signature').addEventListener('input', function() {
