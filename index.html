@@ -528,7 +528,13 @@
       });
       document.querySelector(`[data-ratio="${ratio}"]`).classList.add('active');
       
-      // Calculate frame dimensions
+      // If image is uploaded, ratio doesn't control frame size anymore
+      if (originalImageData) {
+        updateImageSize(); // Recalculate based on image + padding
+        return;
+      }
+      
+      // No image uploaded - use ratio for default frame size
       const frame = document.getElementById('canvasFrame');
       const containerWidth = window.innerWidth - 280; // Account for control panels
       const containerHeight = window.innerHeight - 120; // Account for top/bottom spacing
@@ -549,9 +555,6 @@
       
       frame.style.width = width + 'px';
       frame.style.height = height + 'px';
-      
-      // Update image size when ratio changes
-      updateImageSize();
     }
 
     // Initialize with default theme and ratio
@@ -647,19 +650,46 @@
     addDragEvents(canvasFrame);
     addDragEvents(uploadBox);
 
-    // Function to update image size based on canvas frame and padding
+    // Function to update frame size based on image and padding (new approach)
     function updateImageSize() {
+      if (!originalImageData) return;
+      
       const frame = document.getElementById('canvasFrame');
       const img = document.getElementById('previewImage');
-      const frameRect = frame.getBoundingClientRect();
       const paddingValue = parseInt(document.getElementById('padding').value);
       
-      // Calculate available space after padding
-      const maxWidth = frameRect.width - (paddingValue * 2);
-      const maxHeight = frameRect.height - (paddingValue * 2);
+      // Calculate optimal display scale to fit screen while maintaining aspect ratio
+      const containerWidth = window.innerWidth - 280; // Account for control panels
+      const containerHeight = window.innerHeight - 120; // Account for top/bottom spacing
       
-      img.style.maxWidth = maxWidth + 'px';
-      img.style.maxHeight = maxHeight + 'px';
+      // Calculate what the frame size would be (image + padding)
+      const frameWidthWithPadding = originalImageData.naturalWidth + (paddingValue * 2);
+      const frameHeightWithPadding = originalImageData.naturalHeight + (paddingValue * 2);
+      
+      // Scale down proportionally to fit screen if needed
+      const scaleX = containerWidth / frameWidthWithPadding;
+      const scaleY = containerHeight / frameHeightWithPadding;
+      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, max 1:1
+      
+      // Set frame size
+      const displayFrameWidth = frameWidthWithPadding * scale;
+      const displayFrameHeight = frameHeightWithPadding * scale;
+      frame.style.width = displayFrameWidth + 'px';
+      frame.style.height = displayFrameHeight + 'px';
+      
+      // Set image size (maintain aspect ratio, centered)
+      const displayImageWidth = originalImageData.naturalWidth * scale;
+      const displayImageHeight = originalImageData.naturalHeight * scale;
+      img.style.width = displayImageWidth + 'px';
+      img.style.height = displayImageHeight + 'px';
+      img.style.maxWidth = 'none';
+      img.style.maxHeight = 'none';
+      
+      // Update container padding to center the image
+      const displayPadding = paddingValue * scale;
+      document.getElementById('imageContainer').style.padding = displayPadding + 'px';
+      
+      console.log('Preview: Frame', displayFrameWidth + 'x' + displayFrameHeight, 'Image', displayImageWidth + 'x' + displayImageHeight, 'Padding', displayPadding);
     }
 
     // Live style controls with value display
@@ -673,7 +703,9 @@
 
     document.getElementById('padding').addEventListener('input', function() {
       document.getElementById('paddingValue').textContent = this.value + 'px';
-      updateImageSize(); // Update image size based on new padding
+      if (originalImageData) {
+        updateImageSize(); // Update frame and image size based on new padding
+      }
     });
 
     document.getElementById('shadow').addEventListener('input', function() {
