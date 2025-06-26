@@ -487,6 +487,7 @@
     let currentTheme = 'sky'; // Track current theme
     let currentThemeType = 'gradient'; // 'gradient' or 'image'
     let currentImageTheme = '1'; // Track current image theme
+    let originalImageData = null; // Store original image data for high-res downloads
 
     function changeTheme(theme) {
       currentTheme = theme;
@@ -573,7 +574,19 @@
       if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          document.getElementById('previewImage').src = e.target.result;
+          const previewImg = document.getElementById('previewImage');
+          previewImg.src = e.target.result;
+          
+          // Store original image data for high-res downloads
+          previewImg.onload = function() {
+            originalImageData = {
+              src: e.target.result,
+              naturalWidth: previewImg.naturalWidth,
+              naturalHeight: previewImg.naturalHeight
+            };
+            console.log('Original image size:', originalImageData.naturalWidth, 'x', originalImageData.naturalHeight);
+          };
+          
           document.getElementById('imageContainer').style.display = 'block';
           document.getElementById('downloadBtn').disabled = false;
           
@@ -746,15 +759,24 @@
     function drawImageAndSignature(ctx, frameRect, canvas) {
       // Draw image if exists
       const img = document.getElementById('previewImage');
-      if (img.src && img.offsetWidth > 0) {
-        const imgRect = img.getBoundingClientRect();
-        const frameOffset = document.getElementById('canvasFrame').getBoundingClientRect();
+      if (img.src && img.offsetWidth > 0 && originalImageData) {
+        // Calculate optimal image size for high-res download
+        const paddingValue = parseInt(document.getElementById('padding').value);
+        const availableWidth = frameRect.width - (paddingValue * 2);
+        const availableHeight = frameRect.height - (paddingValue * 2);
         
-        // Calculate image position relative to frame
-        const x = imgRect.left - frameOffset.left;
-        const y = imgRect.top - frameOffset.top;
+        // Calculate scale to fit the available space while maintaining aspect ratio
+        const scaleX = availableWidth / originalImageData.naturalWidth;
+        const scaleY = availableHeight / originalImageData.naturalHeight;
+        const scale = Math.min(scaleX, scaleY);
         
-        // Create image element for canvas
+        // Calculate final image dimensions and position
+        const finalWidth = originalImageData.naturalWidth * scale;
+        const finalHeight = originalImageData.naturalHeight * scale;
+        const x = (frameRect.width - finalWidth) / 2;
+        const y = (frameRect.height - finalHeight) / 2;
+        
+        // Create image element for canvas using original high-res data
         const image = new Image();
         image.crossOrigin = 'anonymous'; // Fix CORS for uploaded images if needed
         image.onload = function() {
@@ -772,16 +794,16 @@
             // Create a temporary canvas to draw the image with rounded corners
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = imgRect.width;
-            tempCanvas.height = imgRect.height;
+            tempCanvas.width = finalWidth;
+            tempCanvas.height = finalHeight;
             
-            // Draw image to temp canvas with rounded corners
+            // Draw original high-res image to temp canvas with rounded corners
             if (rounded > 0) {
               tempCtx.beginPath();
-              tempCtx.roundRect(0, 0, imgRect.width, imgRect.height, rounded);
+              tempCtx.roundRect(0, 0, finalWidth, finalHeight, rounded);
               tempCtx.clip();
             }
-            tempCtx.drawImage(image, 0, 0, imgRect.width, imgRect.height);
+            tempCtx.drawImage(image, 0, 0, finalWidth, finalHeight);
             
             // Draw the temp canvas with shadow to main canvas
             ctx.drawImage(tempCanvas, x, y);
@@ -791,10 +813,10 @@
             ctx.save();
             if (rounded > 0) {
               ctx.beginPath();
-              ctx.roundRect(x, y, imgRect.width, imgRect.height, rounded);
+              ctx.roundRect(x, y, finalWidth, finalHeight, rounded);
               ctx.clip();
             }
-            ctx.drawImage(image, x, y, imgRect.width, imgRect.height);
+            ctx.drawImage(image, x, y, finalWidth, finalHeight);
             ctx.restore();
           }
           
@@ -804,7 +826,7 @@
           // Download
           downloadCanvas(canvas, currentThemeType);
         };
-        image.src = img.src;
+        image.src = originalImageData.src; // Use original high-res image data
       } else {
         // No image, just download background with signature if exists
         addSignatureToCanvas(ctx, frameRect);
