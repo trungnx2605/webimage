@@ -704,24 +704,39 @@
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
-      // Set canvas size to match frame with much higher resolution
-      const frameRect = frame.getBoundingClientRect();
-      const scaleFactor = 4; // Increase from 2x to 4x for better quality
-      canvas.width = frameRect.width * scaleFactor;
-      canvas.height = frameRect.height * scaleFactor;
+      let canvasWidth, canvasHeight;
       
-      // Scale context for higher resolution
-      ctx.scale(scaleFactor, scaleFactor);
+      // If there's an uploaded image, base canvas size on image + padding
+      if (originalImageData) {
+        const paddingValue = parseInt(document.getElementById('padding').value);
+        
+        // Canvas size = original image size + padding on all sides
+        canvasWidth = originalImageData.naturalWidth + (paddingValue * 2);
+        canvasHeight = originalImageData.naturalHeight + (paddingValue * 2);
+        
+        console.log('Dynamic canvas size based on image:', canvasWidth, 'x', canvasHeight);
+      } else {
+        // No image uploaded, use frame size as fallback
+        const frameRect = frame.getBoundingClientRect();
+        canvasWidth = frameRect.width * 4;
+        canvasHeight = frameRect.height * 4;
+        console.log('Fixed canvas size (no image):', canvasWidth, 'x', canvasHeight);
+      }
+      
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      // No scaling needed since we're working in actual pixel dimensions
       
       // Handle background based on theme type
       if (currentThemeType === 'gradient') {
         // Get current theme and create proper gradient
-        const gradient = createCanvasGradient(ctx, currentTheme, frameRect.width, frameRect.height);
+        const gradient = createCanvasGradient(ctx, currentTheme, canvasWidth, canvasHeight);
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, frameRect.width, frameRect.height);
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         
         // Continue with image drawing
-        drawImageAndSignature(ctx, frameRect, canvas);
+        drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
             } else if (currentThemeType === 'image') {
         // Load local background image for download
         const bgImage = new Image();
@@ -729,8 +744,8 @@
         bgImage.onload = function() {
           console.log('Background image loaded for canvas');
           // Draw background image to cover the entire canvas
-          ctx.drawImage(bgImage, 0, 0, frameRect.width, frameRect.height);
-          drawImageAndSignature(ctx, frameRect, canvas);
+          ctx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
+          drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
         };
         
         bgImage.onerror = function() {
@@ -742,12 +757,12 @@
             '#f093fb', '#4facfe'
           ];
           const colorIndex = (parseInt(currentImageTheme) - 1) % fallbackColors.length;
-          const gradient = ctx.createLinearGradient(0, 0, frameRect.width, frameRect.height);
+          const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
           gradient.addColorStop(0, fallbackColors[colorIndex]);
           gradient.addColorStop(1, fallbackColors[(colorIndex + 1) % fallbackColors.length]);
           ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, frameRect.width, frameRect.height);
-          drawImageAndSignature(ctx, frameRect, canvas);
+          ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+          drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas);
         };
         
         // Use local image path
@@ -756,25 +771,19 @@
       }
     }
     
-    function drawImageAndSignature(ctx, frameRect, canvas) {
+    function drawImageAndSignature(ctx, canvasWidth, canvasHeight, canvas) {
       // Draw image if exists
       const img = document.getElementById('previewImage');
       if (img.src && img.offsetWidth > 0 && originalImageData) {
-        // Calculate optimal image size for high-res download
         const paddingValue = parseInt(document.getElementById('padding').value);
-        const availableWidth = frameRect.width - (paddingValue * 2);
-        const availableHeight = frameRect.height - (paddingValue * 2);
         
-        // Calculate scale to fit the available space while maintaining aspect ratio
-        const scaleX = availableWidth / originalImageData.naturalWidth;
-        const scaleY = availableHeight / originalImageData.naturalHeight;
-        const scale = Math.min(scaleX, scaleY);
+        // Use original image dimensions at full size
+        const finalWidth = originalImageData.naturalWidth;
+        const finalHeight = originalImageData.naturalHeight;
         
-        // Calculate final image dimensions and position
-        const finalWidth = originalImageData.naturalWidth * scale;
-        const finalHeight = originalImageData.naturalHeight * scale;
-        const x = (frameRect.width - finalWidth) / 2;
-        const y = (frameRect.height - finalHeight) / 2;
+        // Center the image in the canvas (padding is already added to canvas size)
+        const x = paddingValue;
+        const y = paddingValue;
         
         // Create image element for canvas using original high-res data
         const image = new Image();
@@ -821,7 +830,7 @@
           }
           
           // Add signature text if exists
-          addSignatureToCanvas(ctx, frameRect);
+          addSignatureToCanvas(ctx, canvasWidth, canvasHeight);
           
           // Download
           downloadCanvas(canvas, currentThemeType);
@@ -829,12 +838,12 @@
         image.src = originalImageData.src; // Use original high-res image data
       } else {
         // No image, just download background with signature if exists
-        addSignatureToCanvas(ctx, frameRect);
+        addSignatureToCanvas(ctx, canvasWidth, canvasHeight);
         downloadCanvas(canvas, currentThemeType);
       }
     }
     
-    function addSignatureToCanvas(ctx, frameRect) {
+    function addSignatureToCanvas(ctx, canvasWidth, canvasHeight) {
       const signatureInput = document.getElementById('signature');
       if (signatureInput.value.trim()) {
         ctx.fillStyle = 'white';
@@ -842,8 +851,8 @@
         ctx.fontWeight = '600';
         ctx.textAlign = 'center';
         
-        const textX = frameRect.width / 2;
-        const textY = frameRect.height - 20;
+        const textX = canvasWidth / 2;
+        const textY = canvasHeight - 20;
         ctx.fillText(signatureInput.value.trim(), textX, textY);
       }
     }
