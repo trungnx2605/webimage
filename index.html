@@ -691,13 +691,14 @@
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
-      // Set canvas size to match frame
+      // Set canvas size to match frame with much higher resolution
       const frameRect = frame.getBoundingClientRect();
-      canvas.width = frameRect.width * 2; // Higher resolution
-      canvas.height = frameRect.height * 2;
+      const scaleFactor = 4; // Increase from 2x to 4x for better quality
+      canvas.width = frameRect.width * scaleFactor;
+      canvas.height = frameRect.height * scaleFactor;
       
       // Scale context for higher resolution
-      ctx.scale(2, 2);
+      ctx.scale(scaleFactor, scaleFactor);
       
       // Handle background based on theme type
       if (currentThemeType === 'gradient') {
