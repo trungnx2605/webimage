@@ -326,7 +326,7 @@
       color: white;
       font-family: Arial, sans-serif;
       font-size: 18px;
-      font-weight: 600;
+      font-weight: normal;
       pointer-events: none;
       z-index: 100;
       white-space: nowrap;
@@ -338,8 +338,8 @@
     <!-- Canvas Frame with Gradient Background -->
     <div class="canvas-frame" id="canvasFrame">
       <!-- Uploaded Image Preview -->
-      <div class="image-container" id="imageContainer" style="display: none; padding: 60px;">
-        <img id="previewImage" class="uploaded-image" src="" alt="Uploaded" style="border-radius: 16px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);" />
+      <div class="image-container" id="imageContainer" style="display: none; padding: 300px;">
+        <img id="previewImage" class="uploaded-image" src="" alt="Uploaded" style="border-radius: 80px; box-shadow: 0 50px 100px rgba(0, 0, 0, 0.4);" />
       </div>
       <!-- Signature Text -->
       <div class="signature-text" id="signatureText" style="display: none;"></div>
@@ -418,19 +418,19 @@
     <!-- Style Controls -->
     <div class="control-panel">
       <label for="rounded">🔵 Rounded 
-        <span class="value-display" id="roundedValue">16px</span>
+        <span class="value-display" id="roundedValue">80px</span>
       </label>
-      <input type="range" id="rounded" min="0" max="200" value="16">
+      <input type="range" id="rounded" min="0" max="200" value="80">
 
       <label for="padding">📏 Padding 
-        <span class="value-display" id="paddingValue">60px</span>
+        <span class="value-display" id="paddingValue">300px</span>
       </label>
-      <input type="range" id="padding" min="0" max="1000" value="60">
+      <input type="range" id="padding" min="0" max="1000" value="300">
 
       <label for="shadow">🌫️ Shadow 
-        <span class="value-display" id="shadowValue">40</span>
+        <span class="value-display" id="shadowValue">100</span>
       </label>
-      <input type="range" id="shadow" min="0" max="100" value="40">
+      <input type="range" id="shadow" min="0" max="300" value="100">
 
       <label for="signature">✍️ Signature</label>
       <input type="text" id="signature" placeholder="Your text signature..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
@@ -561,7 +561,7 @@
     changeRatio('4:3');
     
     // Initialize padding value display
-    document.getElementById('paddingValue').textContent = '60px';
+    document.getElementById('paddingValue').textContent = '300px';
 
     // File upload handling
     document.getElementById('fileUpload').addEventListener('change', function(event) {
@@ -972,7 +972,6 @@
         
         ctx.fillStyle = 'white';
         ctx.font = `${scaledFontSize}px Arial, sans-serif`;
-        ctx.fontWeight = '600';
         ctx.textAlign = 'center';
         
         const textX = canvasWidth / 2;
