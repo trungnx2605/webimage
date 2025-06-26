@@ -845,9 +845,11 @@
         const finalWidth = originalImageData.naturalWidth;
         const finalHeight = originalImageData.naturalHeight;
         
-        // Center the image in the canvas (padding is already added to canvas size)
-        const x = paddingValue;
-        const y = paddingValue;
+        // Center the image in the canvas - this ensures even padding/background distribution
+        const x = (canvasWidth - finalWidth) / 2;
+        const y = (canvasHeight - finalHeight) / 2;
+        
+        console.log('Image positioning: Canvas', canvasWidth + 'x' + canvasHeight, 'Image at (' + x + ',' + y + ')', finalWidth + 'x' + finalHeight);
         
         // Create image element for canvas using original high-res data
         const image = new Image();
