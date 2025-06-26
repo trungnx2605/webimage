@@ -528,33 +528,32 @@
       });
       document.querySelector(`[data-ratio="${ratio}"]`).classList.add('active');
       
-      // If image is uploaded, ratio doesn't control frame size anymore
       if (originalImageData) {
-        updateImageSize(); // Recalculate based on image + padding
-        return;
-      }
-      
-      // No image uploaded - use ratio for default frame size
-      const frame = document.getElementById('canvasFrame');
-      const containerWidth = window.innerWidth - 280; // Account for control panels
-      const containerHeight = window.innerHeight - 120; // Account for top/bottom spacing
-      
-      const aspectRatio = ratios[ratio];
-      let width, height;
-      
-      // Calculate optimal size while maintaining aspect ratio
-      if (containerWidth / containerHeight > aspectRatio) {
-        // Height is the limiting factor
-        height = Math.min(containerHeight, 600);
-        width = height * aspectRatio;
+        // Image uploaded - ratio controls background, image fits within
+        updateImageSize();
       } else {
-        // Width is the limiting factor
-        width = Math.min(containerWidth, 800);
-        height = width / aspectRatio;
+        // No image uploaded - ratio controls frame size directly
+        const frame = document.getElementById('canvasFrame');
+        const containerWidth = window.innerWidth - 280; // Account for control panels
+        const containerHeight = window.innerHeight - 120; // Account for top/bottom spacing
+        
+        const aspectRatio = ratios[ratio];
+        let width, height;
+        
+        // Calculate optimal size while maintaining aspect ratio
+        if (containerWidth / containerHeight > aspectRatio) {
+          // Height is the limiting factor
+          height = Math.min(containerHeight, 600);
+          width = height * aspectRatio;
+        } else {
+          // Width is the limiting factor
+          width = Math.min(containerWidth, 800);
+          height = width / aspectRatio;
+        }
+        
+        frame.style.width = width + 'px';
+        frame.style.height = height + 'px';
       }
-      
-      frame.style.width = width + 'px';
-      frame.style.height = height + 'px';
     }
 
     // Initialize with default theme and ratio
@@ -650,46 +649,67 @@
     addDragEvents(canvasFrame);
     addDragEvents(uploadBox);
 
-    // Function to update frame size based on image and padding (new approach)
+    // Function to update frame size based on ratio and image positioning
     function updateImageSize() {
-      if (!originalImageData) return;
-      
       const frame = document.getElementById('canvasFrame');
       const img = document.getElementById('previewImage');
       const paddingValue = parseInt(document.getElementById('padding').value);
       
-      // Calculate optimal display scale to fit screen while maintaining aspect ratio
+      if (!originalImageData) {
+        // No image uploaded - use ratio for frame size (existing behavior)
+        return;
+      }
+      
+      // Calculate frame size based on selected ratio
       const containerWidth = window.innerWidth - 280; // Account for control panels
       const containerHeight = window.innerHeight - 120; // Account for top/bottom spacing
+      const aspectRatio = ratios[currentRatio];
       
-      // Calculate what the frame size would be (image + padding)
-      const frameWidthWithPadding = originalImageData.naturalWidth + (paddingValue * 2);
-      const frameHeightWithPadding = originalImageData.naturalHeight + (paddingValue * 2);
+      let frameWidth, frameHeight;
       
-      // Scale down proportionally to fit screen if needed
-      const scaleX = containerWidth / frameWidthWithPadding;
-      const scaleY = containerHeight / frameHeightWithPadding;
-      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, max 1:1
+      // Calculate frame size to fit screen while maintaining selected ratio
+      if (containerWidth / containerHeight > aspectRatio) {
+        // Height is the limiting factor
+        frameHeight = Math.min(containerHeight, 600);
+        frameWidth = frameHeight * aspectRatio;
+      } else {
+        // Width is the limiting factor
+        frameWidth = Math.min(containerWidth, 800);
+        frameHeight = frameWidth / aspectRatio;
+      }
       
-      // Set frame size
-      const displayFrameWidth = frameWidthWithPadding * scale;
-      const displayFrameHeight = frameHeightWithPadding * scale;
-      frame.style.width = displayFrameWidth + 'px';
-      frame.style.height = displayFrameHeight + 'px';
+      // Set frame size based on ratio
+      frame.style.width = frameWidth + 'px';
+      frame.style.height = frameHeight + 'px';
       
-      // Set image size (maintain aspect ratio, centered)
-      const displayImageWidth = originalImageData.naturalWidth * scale;
-      const displayImageHeight = originalImageData.naturalHeight * scale;
+      // Calculate image display size to fit within frame with padding
+      const availableWidth = frameWidth - (paddingValue * 2);
+      const availableHeight = frameHeight - (paddingValue * 2);
+      
+      // Scale image to fit available space while maintaining its aspect ratio
+      const imageAspectRatio = originalImageData.naturalWidth / originalImageData.naturalHeight;
+      let displayImageWidth, displayImageHeight;
+      
+      if (availableWidth / availableHeight > imageAspectRatio) {
+        // Height is limiting factor
+        displayImageHeight = availableHeight;
+        displayImageWidth = displayImageHeight * imageAspectRatio;
+      } else {
+        // Width is limiting factor
+        displayImageWidth = availableWidth;
+        displayImageHeight = displayImageWidth / imageAspectRatio;
+      }
+      
+      // Set image size
       img.style.width = displayImageWidth + 'px';
       img.style.height = displayImageHeight + 'px';
       img.style.maxWidth = 'none';
       img.style.maxHeight = 'none';
       
-      // Update container padding to center the image
-      const displayPadding = paddingValue * scale;
-      document.getElementById('imageContainer').style.padding = displayPadding + 'px';
+      // Center the image with padding
+      document.getElementById('imageContainer').style.padding = paddingValue + 'px';
       
-      console.log('Preview: Frame', displayFrameWidth + 'x' + displayFrameHeight, 'Image', displayImageWidth + 'x' + displayImageHeight, 'Padding', displayPadding);
+      console.log('Preview: Frame', frameWidth + 'x' + frameHeight, '(' + currentRatio + ')', 'Image', displayImageWidth + 'x' + displayImageHeight, 'Padding', paddingValue);
     }
 
     // Live style controls with value display
@@ -738,15 +758,27 @@
       
       let canvasWidth, canvasHeight;
       
-      // If there's an uploaded image, base canvas size on image + padding
+      // If there's an uploaded image, base canvas size on ratio and ensure image fits
       if (originalImageData) {
         const paddingValue = parseInt(document.getElementById('padding').value);
+        const aspectRatio = ratios[currentRatio];
         
-        // Canvas size = original image size + padding on all sides
-        canvasWidth = originalImageData.naturalWidth + (paddingValue * 2);
-        canvasHeight = originalImageData.naturalHeight + (paddingValue * 2);
+        // Calculate minimum canvas size needed for image + padding
+        const minCanvasWidth = originalImageData.naturalWidth + (paddingValue * 2);
+        const minCanvasHeight = originalImageData.naturalHeight + (paddingValue * 2);
         
-        console.log('Dynamic canvas size based on image:', canvasWidth, 'x', canvasHeight);
+        // Calculate canvas size based on ratio, ensuring it's big enough for the image
+        if (minCanvasWidth / minCanvasHeight > aspectRatio) {
+          // Width is the limiting factor
+          canvasWidth = minCanvasWidth;
+          canvasHeight = canvasWidth / aspectRatio;
+        } else {
+          // Height is the limiting factor
+          canvasHeight = minCanvasHeight;
+          canvasWidth = canvasHeight * aspectRatio;
+        }
+        
+        console.log('Canvas size based on ratio', currentRatio + ':', canvasWidth, 'x', canvasHeight);
       } else {
         // No image uploaded, use frame size as fallback
         const frameRect = frame.getBoundingClientRect();
