@@ -181,19 +181,10 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      /* Optimize image loading specifically for small thumbnails */
-      image-rendering: auto;
+      /* Optimize image loading for thumbnails */
       image-rendering: -webkit-optimize-contrast;
-      background-attachment: scroll;
-      /* Force browser to prioritize smaller image loading */
-      contain: layout style paint;
-      /* Optimize for small size rendering */
-      will-change: transform;
-      /* Ensure efficient memory usage */
-      backface-visibility: hidden;
-      /* Hint to browser this is a small decorative image */
-      content-visibility: auto;
-      contain-intrinsic-size: 40px 40px;
+      image-rendering: crisp-edges;
+      background-attachment: scroll; /* Prevent repainting issues */
     }
 
     .image-theme:hover {
