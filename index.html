@@ -181,6 +181,10 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
+      /* Optimize image loading for thumbnails */
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      background-attachment: scroll; /* Prevent repainting issues */
     }
 
     .image-theme:hover {
@@ -530,18 +534,18 @@
       
       <!-- Column 3 - Image Themes -->
       <div class="theme-column">
-        <div class="image-theme" onclick="changeImageTheme('1')" style="background-image: url('https://cdn.addbackground.app/image/1.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('2')" style="background-image: url('https://cdn.addbackground.app/image/2.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('3')" style="background-image: url('https://cdn.addbackground.app/image/3.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('4')" style="background-image: url('https://cdn.addbackground.app/image/4.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('5')" style="background-image: url('https://cdn.addbackground.app/image/5.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('6')" style="background-image: url('https://cdn.addbackground.app/image/6.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('7')" style="background-image: url('https://cdn.addbackground.app/image/7.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('8')" style="background-image: url('https://cdn.addbackground.app/image/8.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('9')" style="background-image: url('https://cdn.addbackground.app/image/9.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('10')" style="background-image: url('https://cdn.addbackground.app/image/10.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('11')" style="background-image: url('https://cdn.addbackground.app/image/11.jpg')"></div>
-        <div class="image-theme" onclick="changeImageTheme('12')" style="background-image: url('https://cdn.addbackground.app/image/12.jpg')"></div>
+        <div class="image-theme" onclick="changeImageTheme('1')" style="background-image: url('https://cdn.addbackground.app/image/thumb/1.jpg')" data-full-image="https://cdn.addbackground.app/image/1.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('2')" style="background-image: url('https://cdn.addbackground.app/image/thumb/2.jpg')" data-full-image="https://cdn.addbackground.app/image/2.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('3')" style="background-image: url('https://cdn.addbackground.app/image/thumb/3.jpg')" data-full-image="https://cdn.addbackground.app/image/3.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('4')" style="background-image: url('https://cdn.addbackground.app/image/thumb/4.jpg')" data-full-image="https://cdn.addbackground.app/image/4.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('5')" style="background-image: url('https://cdn.addbackground.app/image/thumb/5.jpg')" data-full-image="https://cdn.addbackground.app/image/5.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('6')" style="background-image: url('https://cdn.addbackground.app/image/thumb/6.jpg')" data-full-image="https://cdn.addbackground.app/image/6.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('7')" style="background-image: url('https://cdn.addbackground.app/image/thumb/7.jpg')" data-full-image="https://cdn.addbackground.app/image/7.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('8')" style="background-image: url('https://cdn.addbackground.app/image/thumb/8.jpg')" data-full-image="https://cdn.addbackground.app/image/8.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('9')" style="background-image: url('https://cdn.addbackground.app/image/thumb/9.jpg')" data-full-image="https://cdn.addbackground.app/image/9.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('10')" style="background-image: url('https://cdn.addbackground.app/image/thumb/10.jpg')" data-full-image="https://cdn.addbackground.app/image/10.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('11')" style="background-image: url('https://cdn.addbackground.app/image/thumb/11.jpg')" data-full-image="https://cdn.addbackground.app/image/11.jpg"></div>
+        <div class="image-theme" onclick="changeImageTheme('12')" style="background-image: url('https://cdn.addbackground.app/image/thumb/12.jpg')" data-full-image="https://cdn.addbackground.app/image/12.jpg"></div>
       </div>
     </div>
 
@@ -636,6 +640,33 @@
     let currentThemeType = 'gradient'; // 'gradient' or 'image'
     let currentImageTheme = '1'; // Track current image theme
     let originalImageData = null; // Store original image data for high-res downloads
+    
+    // Performance: Cache for preloaded images
+    const imageCache = new Map();
+    const preloadedImages = new Set();
+
+    // Performance: Preload full-size image when thumbnail is hovered
+    function preloadImage(imageNumber) {
+      if (preloadedImages.has(imageNumber)) return;
+      
+      const fullImageUrl = `https://cdn.addbackground.app/image/${imageNumber}.jpg`;
+      const img = new Image();
+      img.onload = () => {
+        imageCache.set(imageNumber, img);
+        preloadedImages.add(imageNumber);
+        console.log(`Preloaded image ${imageNumber}`);
+      };
+      img.src = fullImageUrl;
+    }
+
+    // Add hover events to preload full images
+    document.addEventListener('DOMContentLoaded', function() {
+      const imageThemes = document.querySelectorAll('.image-theme');
+      imageThemes.forEach((theme, index) => {
+        const imageNumber = (index + 1).toString();
+        theme.addEventListener('mouseenter', () => preloadImage(imageNumber));
+      });
+    });
 
     function changeTheme(theme) {
       currentTheme = theme;
@@ -660,7 +691,7 @@
       // Clear gradient background first
       frame.style.background = 'transparent';
       
-      // Set image background properties using CDN images
+      // Use full-size image only when actually selected as background
       frame.style.backgroundImage = `url('https://cdn.addbackground.app/image/${imageNumber}.jpg')`;
       frame.style.backgroundSize = 'cover';
       frame.style.backgroundPosition = 'center';
